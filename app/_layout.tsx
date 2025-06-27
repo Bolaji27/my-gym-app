@@ -12,7 +12,7 @@ export default function RootLayout() {
       <Stack>
       <Stack.Screen name="index" />
         <Stack.Screen name="+not-found" />
-        <Stack.Screen name="logs" />
+        <Stack.Screen name="(logs)" />
         <Stack.Screen name="gains" />
         
 

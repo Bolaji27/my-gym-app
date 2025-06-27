@@ -31,7 +31,16 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow my_gym_app to access your photos",
+          "cameraPermission": "Allow my_gym_app to access your camera",
+          "microphonePermission": "Allow my_gym_app to access your microphone"
+        }
       ]
+
     ],
     "experiments": {
       "typedRoutes": true

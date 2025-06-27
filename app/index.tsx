@@ -1,77 +1,155 @@
-import { Image, StyleSheet, View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard} from 'react-native';
-import { Link } from 'expo-router';
-import { FontAwesome5 } from '@expo/vector-icons';
-import { FontAwesome} from '@expo/vector-icons';
-import {useState} from 'react';
-import {SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import Routine from './components/weeklyRoutine';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { useState, useEffect } from "react";
+import { Redirect } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { Link } from "expo-router";
 
+const Signup = () => {
+  const [error, setError] = useState<null | string>(null);
+  const [redirect, setRedirect] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
 
+  useEffect(() => {
+    const getToken = async () => {
+      const getAuth = await AsyncStorage.getItem("user-token");
+      if (!getAuth) {
+        setError("no token attached");
+        setTimeout(()=>{
+          setError('')
+        }, 3000)
+        return;
+      }
+      return setHasToken(true);
+    };
+    getToken();
+  }, []);
 
+  const [dataCollect, setDataCollect] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
 
-export default function HomeScreen() {
-  const [goal, setGoal] = useState('');
-  const [workout, setWorkout] = useState('');
-  const [activity, setActivity] = useState('Activity');
-  const [note, setNote] = useState('Note');
+  const submitData = async () => {
+    if (
+      !dataCollect.firstName ||
+      !dataCollect.lastName ||
+      !dataCollect.email ||
+      !dataCollect.password
+    ) {
+      return setError("Please fill all the form input");
+      setTimeout(() => {
+        setError("");
+      }, 3000);
+    }
+    try {
+      const response = await fetch("http://localhost:3000/api/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: dataCollect.firstName,
+          lastName: dataCollect.lastName,
+          email: dataCollect.email,
+          password: dataCollect.password,
+        }),
+      });
+      if (!response.ok) {
+        setError("internal server error");
+        return;
+      }
+      const data = await response.json();
+      await AsyncStorage.setItem("user-token", data.token);
+      console.log(data);
+      return setRedirect(true);
+    } catch (error) {
+      setError("network err");
+      console.log(error);
+      setTimeout(() => {
+        setError("");
+      }, 3000);
+    }
+  };
+
   return (
-    <View className='mx-2 '>
-    <View className='flex flex-row items-center mb-[30px] w-full gap-4'>
-      <Text className='text-[16px] flex-1  h-[26px] text-center text-my-color'>LiftNRecord</Text>
-      <View className=' border rounded-xl flex-1 justify-center items-center h-[36px] border-my-color '>
-      <Link href="/gains" className='text-xs text-center text-my-color' >GainsWBriez</Link>
-      </View>
-      <View className='flex-1 flex-row gap-3  h-[36px] items-center '>
-      <FontAwesome5 name="dumbbell" size={12} className='text-white'/>
-      <View className='border rounded-xl justify-center items-center flex-1 h-[36px] bg-my-color  '>
-      <Link href="/logs" className='text-xs text-white'>View Log</Link>
-      </View>
-      </View>
-      <View className=' flex-1 items-center justify-center'>
-        <FontAwesome name="user" size={22}/>
-      </View>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View className="mx-2 justify-center">
+          <View className="flex items-center justify-center mt-4">
+            <Text className="text-my-color text-xl">LiftNRecord</Text>
+          </View>
+          <View className="flex justify-center items-center mt-20">
+            <View className="w-[183px] flex gap-8">
+              <TextInput
+                placeholder="First Name"
+                placeholderTextColor="#A18D8D"
+                className="border rounded-md h-9 border-my-color text-my-color pl-1"
+                value={dataCollect.firstName}
+                onChangeText={(text) =>
+                  setDataCollect((prev) => ({ ...prev, firstName: text }))
+                }
+              />
+              <TextInput
+                placeholder="Last Name"
+                placeholderTextColor="#A18D8D"
+                className="border rounded-md h-9 border-my-color text-my-color pl-1"
+                value={dataCollect.lastName}
+                onChangeText={(text) =>
+                  setDataCollect((prev) => ({ ...prev, lastName: text }))
+                }
+              />
+              <TextInput
+                placeholder="Email"
+                placeholderTextColor="#A18D8D"
+                className="border rounded-md h-9 border-my-color text-my-color pl-1"
+                value={dataCollect.email}
+                onChangeText={(text) =>
+                  setDataCollect((prev) => ({ ...prev, email: text }))
+                }
+              />
+              <TextInput
+                placeholder="Password"
+                placeholderTextColor="#A18D8D"
+                className="border rounded-md h-9 border-my-color text-my-color pl-1"
+                value={dataCollect.password}
+                onChangeText={(text) =>
+                  setDataCollect((prev) => ({ ...prev, password: text }))
+                }
+              />
+            </View>
 
-    <Text className=' mx-auto text-xs mb-10 text-center'>
-      Welcome Mr name
-    </Text>
-
-
-  <View className='flex flex-row gap-2 '> 
-    <View className='flex-1 gap-5'>
-    <View className='flex items-center justify-center border border-my-color rounded-md h-[30px]'>
-   <Text className=''>{!goal? "Goals" : goal} </Text>
-    </View>
-    <View className='flex items-center justify-center border border-my-color rounded-md h-[32px]'>
-   <Text>{workout?workout:"Workout"}</Text>
-    </View>
-    <View className='flex flex-row  gap-2 h-[28px]' > 
-      <View className='flex-1 flex-row  border border-my-color rounded-md justify-center items-center'> 
-        <Text className='flex-1 text-center'>dd</Text>
-        <View className='flex-1 border-l'><Text className='text-center'>mm</Text></View>
-        <View className='flex-1 border-l'><Text className='text-center'>yy</Text></View>
-      </View>
-      <View className='flex-1 border border-my-color rounded-md justify-center items-center'>
-      <Text>Day</Text>
-      </View>
-    </View>
-
-      <View className='flex gap-5 flex-col'>
-  <TextInput placeholder="Activity"  className='border rounded-md px-4 text-black text-sm h-[30px] flex ' value={activity} onChangeText={setActivity} />
-  <TextInput value={note} className='border rounded-md text-sm h-[116px] pl-2 '  multiline={true}
-  textAlignVertical="top" onChangeText={setNote}
-  />
-  <TouchableOpacity className=' rounded-md h-[34px] flex justify-center items-center bg-my-color '>
-    <Text className='text-white' >Add</Text>
-     </TouchableOpacity>
-     </View>
-  </View>
-  <View className='flex-1'>
-  <Routine/>
-  </View>
-   
-  </View>
-    </View>
+            <TouchableOpacity
+              className="flex flex-row items-center justify-center w-[183px] gap-3 mt-8 rounded-full bg-my-color h-10"
+              onPress={submitData}
+            >
+              <Text className="text-white">SignUp</Text>
+              <AntDesign name="arrowright" size={24} color="white" />
+            </TouchableOpacity>
+            {error && <Text className="mt-4 text-xs">{error}</Text>}
+            {redirect && <Redirect href="/(signup)/heightWeight" />}
+            {hasToken && <Redirect href="/(logs)/home" />}
+          </View>
+          <View className="flex flex-row gap-2 justify-center mt-5 text-lg">
+            <Link href="/signin" className="text-my-color border rounded-full w-[60px] text-center border-my-color">Signin</Link>
+            <Text>if you already registered</Text>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
-}
+};
 
+export default Signup;
